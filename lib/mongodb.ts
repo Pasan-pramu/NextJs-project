@@ -18,6 +18,9 @@ if (!MONGODB_URI) {
   );
 }
 
+// Type assertion: MONGODB_URI is guaranteed to be defined after the check above
+const mongoUri: string = MONGODB_URI;
+
 /**
  * Global cache to prevent multiple connections in development.
  * In development, Next.js hot-reloading can cause multiple connections
@@ -47,7 +50,7 @@ async function connectDB(): Promise<mongoose.Connection> {
       bufferCommands: false, // Disable buffering to fail fast
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
+    cached.promise = mongoose.connect(mongoUri, opts).then((mongooseInstance) => {
       return mongooseInstance.connection;
     });
   }
