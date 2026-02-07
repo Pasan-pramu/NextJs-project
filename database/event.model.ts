@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-// TypeScript interface for Event document
-export interface IEvent extends Document {
+// Base interface for Event data (plain object)
+export interface IEventBase {
   title: string;
   slug: string;
   description: string;
@@ -18,6 +18,15 @@ export interface IEvent extends Document {
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// TypeScript interface for Event document (Mongoose Document)
+export interface IEvent extends IEventBase, Document {}
+
+// Interface for lean documents (plain objects returned by .lean())
+export interface IEventLean extends IEventBase {
+  _id: mongoose.Types.ObjectId;
+  __v?: number;
 }
 
 const EventSchema = new Schema<IEvent>(
