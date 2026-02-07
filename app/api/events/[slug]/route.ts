@@ -2,24 +2,24 @@
 import mongoose from 'mongoose';
 
 import connectDB from '@/lib/mongodb';
-import Event, { IEvent } from '@/database/event.model';
+import Event, { IEventLean } from '@/database/event.model';
 
 /**
  * Type-safe response structure for event endpoints
  */
 interface EventResponse {
   message: string;
-  event?: IEvent;
+  event?: IEventLean;
   error?: string;
 }
 
 /**
- * Type for the route parameters
+ * Type for the route parameters (Next.js 15+ uses Promise for params)
  */
 interface RouteParams {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 /**
@@ -38,7 +38,7 @@ export async function GET(
 ): Promise<NextResponse<EventResponse>> {
   try {
     // Extract and validate slug parameter
-    const { slug } = params;
+    const { slug } = await params;
 
     if (!slug || typeof slug !== 'string') {
       return NextResponse.json(
@@ -63,7 +63,7 @@ export async function GET(
     await connectDB();
 
     // Query event by slug with lean() for better performance
-    const event = await Event.findOne({ slug }).lean<IEvent>().exec();
+    const event = await Event.findOne({ slug }).lean<IEventLean>().exec();
 
     // Handle event not found
     if (!event) {
@@ -114,7 +114,7 @@ export async function GET(
     return NextResponse.json(
       { 
         message: 'An unexpected error occurred while fetching the event',
-        error: error instanceof Error ? error.message : 'UNKNOWN_ERROR' 
+        error: 'INTERNAL_ERROR'
       },
       { status: 500 }
     );

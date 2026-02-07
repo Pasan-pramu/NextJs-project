@@ -1,15 +1,21 @@
 import ExploreBtn from "@/components/ExploreBtn";
 import EventCard from "@/components/EventCard";
-import {IEvent} from "@/database";
+import {IEventLean} from "@/database";
+import {getAllEvents} from "@/lib/actions/event.actions";
 import {cacheLife} from "next/cache";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const Page = async () => {
     'use cache';
     cacheLife('hours')
-    const response = await fetch(`${BASE_URL}/api/events`);
-    const { events } = await response.json();
+
+    // Use server action for direct DB access instead of self-fetching API
+    let events: IEventLean[] = [];
+    try {
+        events = await getAllEvents();
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        // Return empty array on failure - will show "no events" state
+    }
 
     return (
         <section>
@@ -22,8 +28,8 @@ const Page = async () => {
                 <h3>Featured Events</h3>
 
                 <ul className="events">
-                    {events && events.length > 0 && events.map((event: IEvent) => (
-                        <li key={event.title} className="list-none">
+                    {events && events.length > 0 && events.map((event: IEventLean) => (
+                        <li key={String(event._id)} className="list-none">
                             <EventCard {...event} />
                         </li>
                     ))}
