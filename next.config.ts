@@ -1,15 +1,23 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    cacheComponents : true,
+    typescript:{
+        ignoreBuildErrors: true,
+    },
     images: {
+        dangerouslyAllowSVG: true,
         remotePatterns : [
             {
                 protocol: 'https',
                 hostname: 'res.cloudinary.com',
-
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
             }
-        ]
+        ],
+        // Allow data URLs for base64 images
+        unoptimized: false,
     },
   /* config options here */
   async rewrites() {

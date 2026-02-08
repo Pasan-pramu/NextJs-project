@@ -2,12 +2,9 @@
 
 import {useState} from "react";
 import {createBooking} from "@/lib/actions/booking.actions";
+import posthog from "posthog-js";
 
-interface BookEventProps {
-    slug: string;
-}
-
-const BookEvent = ({ slug }: BookEventProps) => {
+const BookEvent = ({ eventId, slug }: { eventId: string, slug: string;}) => {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,21 +13,23 @@ const BookEvent = ({ slug }: BookEventProps) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Guard against duplicate submissions
         if (isSubmitting) return;
 
         setIsSubmitting(true);
         setError(null);
 
         try {
-            const result = await createBooking(slug, email);
+            const { success } = await createBooking({ eventId, slug, email });
 
-            if (result.success) {
+            if(success) {
                 setSubmitted(true);
+                posthog.capture('event_booked', { eventId, slug, email })
             } else {
-                setError(result.message);
+                setError('Booking failed. Please try again.');
+                posthog.captureException('Booking creation failed')
             }
-        } catch {
+        } catch (err) {
+            console.error('Booking creation failed', err);
             setError('An unexpected error occurred. Please try again.');
         } finally {
             setIsSubmitting(false);
@@ -40,9 +39,12 @@ const BookEvent = ({ slug }: BookEventProps) => {
     return (
         <div id="book-event">
             {submitted ? (
-                <p className="text-sm">Thank you for signing up!</p>
+                <p className="text-sm text-green-400">Thank you for signing up!</p>
             ): (
                 <form onSubmit={handleSubmit}>
+                    {error && (
+                        <p className="text-red-400 text-sm mb-2">{error}</p>
+                    )}
                     <div>
                         <label htmlFor="email">Email Address</label>
                         <input
@@ -55,10 +57,6 @@ const BookEvent = ({ slug }: BookEventProps) => {
                             disabled={isSubmitting}
                         />
                     </div>
-
-                    {error && (
-                        <p className="text-sm text-red-500 mt-2">{error}</p>
-                    )}
 
                     <button
                         type="submit"
