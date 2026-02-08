@@ -2,7 +2,8 @@
 
 import Event from '@/database/event.model';
 import Booking from '@/database/booking.model';
-import type { IEventLean } from '@/database';
+import type { IEventLean, IEventSerialized } from '@/database';
+import { serializeEvent } from '@/database';
 import connectDB from "@/lib/mongodb";
 import { revalidatePath } from 'next/cache';
 
@@ -28,7 +29,7 @@ export interface CreateEventInput {
  * @param eventData - The event data
  * @returns The created event or error
  */
-export const createEvent = async (eventData: CreateEventInput): Promise<{ success: boolean; event?: IEventLean; error?: string }> => {
+export const createEvent = async (eventData: CreateEventInput): Promise<{ success: boolean; event?: IEventSerialized; error?: string }> => {
     try {
         await connectDB();
 
@@ -64,10 +65,11 @@ export const createEvent = async (eventData: CreateEventInput): Promise<{ succes
         revalidatePath('/');
         revalidatePath('/events');
 
-        // Convert to plain object for client
+        // Convert to plain object and serialize for client
         const eventLean = createdEvent.toObject() as IEventLean;
+        const serializedEvent = serializeEvent(eventLean);
 
-        return { success: true, event: eventLean };
+        return { success: true, event: serializedEvent };
     } catch (error) {
         console.error('Error creating event:', error);
         return {
@@ -80,13 +82,14 @@ export const createEvent = async (eventData: CreateEventInput): Promise<{ succes
 /**
  * Fetches a single event by its slug
  * @param slug - The event slug
- * @returns The event object or null if not found
+ * @returns The serialized event object or null if not found
  */
-export const getEventBySlug = async (slug: string): Promise<IEventLean | null> => {
+export const getEventBySlug = async (slug: string): Promise<IEventSerialized | null> => {
     try {
         await connectDB();
         const event = await Event.findOne({ slug }).lean<IEventLean>();
-        return event;
+        if (!event) return null;
+        return serializeEvent(event);
     } catch (error) {
         console.error('Error fetching event by slug:', error);
         return null;
@@ -112,14 +115,20 @@ export const getBookingsCount = async (slug: string): Promise<number> => {
     }
 };
 
-export const getSimilarEventsBySlug = async (slug: string): Promise<IEventLean[]> => {
+/**
+ * Fetches similar events by slug
+ * @param slug - The event slug
+ * @returns Array of similar serialized events
+ */
+export const getSimilarEventsBySlug = async (slug: string): Promise<IEventSerialized[]> => {
     try {
         await connectDB();
         const event = await Event.findOne({ slug });
 
         if (!event) return [];
 
-        return await Event.find({ _id: { $ne: event._id }, tags: { $in: event.tags } }).lean<IEventLean[]>();
+        const similarEvents = await Event.find({ _id: { $ne: event._id }, tags: { $in: event.tags } }).lean<IEventLean[]>();
+        return similarEvents.map(serializeEvent);
     } catch {
         return [];
     }
@@ -127,13 +136,13 @@ export const getSimilarEventsBySlug = async (slug: string): Promise<IEventLean[]
 
 /**
  * Fetches all events sorted by creation date (newest first)
- * @returns Array of all events
+ * @returns Array of all serialized events
  */
-export const getAllEvents = async (): Promise<IEventLean[]> => {
+export const getAllEvents = async (): Promise<IEventSerialized[]> => {
     try {
         await connectDB();
         const events = await Event.find().sort({ createdAt: -1 }).lean<IEventLean[]>();
-        return events;
+        return events.map(serializeEvent);
     } catch (error) {
         console.error('Error fetching all events:', error);
         return [];

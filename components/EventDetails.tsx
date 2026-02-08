@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import BookEvent from '@/components/BookEvent';
 import EventCard from '@/components/EventCard';
-import { IEventLean } from '@/database';
+import { IEventSerialized } from '@/database';
 import { getEventBySlug, getSimilarEventsBySlug, getBookingsCount } from '@/lib/actions/event.actions';
 
 interface EventDetailsProps {
@@ -14,8 +14,8 @@ interface EventDetailsProps {
 
 const EventDetails = ({ params }: EventDetailsProps) => {
     const slug = use(params);
-    const [event, setEvent] = useState<IEventLean | null>(null);
-    const [similarEvents, setSimilarEvents] = useState<IEventLean[]>([]);
+    const [event, setEvent] = useState<IEventSerialized | null>(null);
+    const [similarEvents, setSimilarEvents] = useState<IEventSerialized[]>([]);
     const [bookingsCount, setBookingsCount] = useState<number>(0);
     const [loading, setLoading] = useState(true);
 
@@ -143,7 +143,7 @@ const EventDetails = ({ params }: EventDetailsProps) => {
                         <p className="text-light-200 text-sm">
                             {bookingsCount} {bookingsCount === 1 ? 'person has' : 'people have'} signed up
                         </p>
-                        <BookEvent eventId={String(event._id)} slug={slug} />
+                        <BookEvent eventId={event._id} slug={slug} />
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@ const EventDetails = ({ params }: EventDetailsProps) => {
                     <h3>Similar Events</h3>
                     <ul className="events">
                         {similarEvents.map((similarEvent) => (
-                            <li key={String(similarEvent._id)} className="list-none">
+                            <li key={similarEvent._id} className="list-none">
                                 <EventCard {...similarEvent} />
                             </li>
                         ))}

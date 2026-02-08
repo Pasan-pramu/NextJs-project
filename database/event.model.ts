@@ -29,6 +29,50 @@ export interface IEventLean extends IEventBase {
   __v?: number;
 }
 
+// Interface for serialized events (safe to pass to Client Components)
+export interface IEventSerialized {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  overview: string;
+  image: string;
+  venue: string;
+  location: string;
+  date: string;
+  time: string;
+  mode: string;
+  audience: string;
+  agenda: string[];
+  organizer: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Helper function to serialize an event for client components
+export function serializeEvent(event: IEventLean): IEventSerialized {
+  return {
+    _id: event._id.toString(),
+    title: event.title,
+    slug: event.slug,
+    description: event.description,
+    overview: event.overview,
+    image: event.image,
+    venue: event.venue,
+    location: event.location,
+    date: event.date,
+    time: event.time,
+    mode: event.mode,
+    audience: event.audience,
+    agenda: event.agenda,
+    organizer: event.organizer,
+    tags: event.tags,
+    createdAt: event.createdAt instanceof Date ? event.createdAt.toISOString() : String(event.createdAt),
+    updatedAt: event.updatedAt instanceof Date ? event.updatedAt.toISOString() : String(event.updatedAt),
+  };
+}
+
 const EventSchema = new Schema<IEvent>(
   {
     title: {
@@ -114,8 +158,7 @@ const EventSchema = new Schema<IEvent>(
   }
 );
 
-// Index for faster slug-based queries
-EventSchema.index({ slug: 1 });
+
 
 /**
  * Pre-save hook to auto-generate slug from title and normalize date/time

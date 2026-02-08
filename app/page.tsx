@@ -1,12 +1,12 @@
 import ExploreBtn from "@/components/ExploreBtn";
 import EventCard from "@/components/EventCard";
-import {IEventLean} from "@/database";
+import {IEventSerialized} from "@/database";
 import {getAllEvents} from "@/lib/actions/event.actions";
 
 const Page = async () => {
 
     // Use server action for direct DB access instead of self-fetching API
-    let events: IEventLean[] = [];
+    let events: IEventSerialized[] = [];
     try {
         events = await getAllEvents();
     } catch (error) {
@@ -25,8 +25,8 @@ const Page = async () => {
                 <h3>Featured Events</h3>
 
                 <ul className="events">
-                    {events && events.length > 0 && events.map((event: IEventLean) => (
-                        <li key={String(event._id)} className="list-none">
+                    {events && events.length > 0 && events.map((event: IEventSerialized) => (
+                        <li key={event._id} className="list-none">
                             <EventCard {...event} />
                         </li>
                     ))}
